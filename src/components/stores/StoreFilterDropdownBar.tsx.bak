@@ -1,0 +1,113 @@
+"use client";
+
+import { useMemo } from "react";
+
+export type FilterState = {
+    addr1: string;     // "전체" 포함
+    addr2: string;     // "" 가능
+    category: string;  // "" = 전체
+    q: string;
+};
+
+function cx(...arr: Array<string | false | undefined | null>) {
+    return arr.filter(Boolean).join(" ");
+}
+
+export default function StoreFilterDropdownBar(props: {
+    value: FilterState;
+    onChange: (next: FilterState) => void;
+
+    addr1Options: string[];
+    addr2Options: string[];
+    categoryOptions: string[];
+
+    loading?: boolean;
+}) {
+    const { value, onChange } = props;
+
+    const addr2Disabled = value.addr1 === "전체";
+    const categoryDisabled = value.addr1 === "전체"; // 지역 먼저 선택하게
+
+    const addr2Placeholder = addr2Disabled ? "2차 지역(먼저 1차 선택)" : "2차 지역 선택";
+    const categoryPlaceholder = categoryDisabled ? "업종(지역 선택 후)" : "업종 선택";
+
+    const addr2List = useMemo(() => {
+        return addr2Disabled ? [] : props.addr2Options;
+    }, [addr2Disabled, props.addr2Options]);
+
+    return (
+        <div className="sticky top-0 z-30 -mx-4 border-b bg-white/95 px-4 py-3 backdrop-blur">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                {/* 1차 */}
+                <select
+                    value={value.addr1}
+                    disabled={props.loading}
+                    onChange={(e) => {
+                        const nextAddr1 = e.target.value;
+                        // ✅ 1차 바꾸면 2차/업종 초기화
+                        onChange({ ...value, addr1: nextAddr1, addr2: "", category: "" });
+                    }}
+                    className={cx(
+                        "w-full rounded-2xl border bg-white px-3 py-3 text-sm font-semibold text-gray-900",
+                        "md:w-48"
+                    )}
+                >
+                    {props.addr1Options.map((a1) => (
+                        <option key={a1} value={a1}>
+                            {a1}
+                        </option>
+                    ))}
+                </select>
+
+                {/* 2차 */}
+                <select
+                    value={value.addr2}
+                    disabled={props.loading || addr2Disabled}
+                    onChange={(e) => {
+                        const nextAddr2 = e.target.value;
+                        // ✅ 2차 바꾸면 업종 초기화(지역 맥락이 바뀌니)
+                        onChange({ ...value, addr2: nextAddr2, category: "" });
+                    }}
+                    className={cx(
+                        "w-full rounded-2xl border bg-white px-3 py-3 text-sm font-semibold text-gray-900",
+                        addr2Disabled ? "text-gray-400" : "",
+                        "md:w-60"
+                    )}
+                >
+                    <option value="">{addr2Placeholder}</option>
+                    {addr2List.map((a2) => (
+                        <option key={a2} value={a2}>
+                            {a2}
+                        </option>
+                    ))}
+                </select>
+
+                {/* 업종 */}
+                <select
+                    value={value.category}
+                    disabled={props.loading || categoryDisabled}
+                    onChange={(e) => onChange({ ...value, category: e.target.value })}
+                    className={cx(
+                        "w-full rounded-2xl border bg-white px-3 py-3 text-sm font-semibold text-gray-900",
+                        categoryDisabled ? "text-gray-400" : "",
+                        "md:w-60"
+                    )}
+                >
+                    <option value="">{categoryPlaceholder}</option>
+                    <option value="">전체 업종</option>
+                    {props.categoryOptions.map((c) => (
+                        <option key={c} value={c}>
+                            {c}
+                        </option>
+                    ))}
+                </select>
+
+                <div className="flex items-center justify-between md:ml-auto">
+                    <div className="text-xs text-gray-500">
+                        {props.loading ? "불러오는 중…" : ""}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

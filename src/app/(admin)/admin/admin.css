@@ -1,0 +1,47 @@
+/* 관리자 영역은 가독성 최우선: 흰 배경 + 진한 텍스트 고정 */
+:root {
+    color-scheme: light;
+}
+
+.admin-root {
+    background: #f8fafc; /* slate-50 */
+    color: #0f172a;      /* slate-900 */
+}
+
+.admin-root a { color: inherit; }
+
+.admin-card {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.admin-muted {
+    color: rgba(15, 23, 42, 0.65);
+}
+
+/* 폼 요소 가독성 */
+.admin-root input,
+.admin-root select,
+.admin-root textarea {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+}
+
+.admin-root input::placeholder,
+.admin-root textarea::placeholder {
+    color: rgba(15, 23, 42, 0.45);
+}
+
+/* 버튼 */
+.admin-btn {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+.admin-btn-outline {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.18);
+}

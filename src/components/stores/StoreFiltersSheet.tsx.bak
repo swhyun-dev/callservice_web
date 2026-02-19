@@ -1,0 +1,283 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+export type FilterState = {
+    addr1: string;      // "전체" 포함
+    addr2: string;      // "" 가능
+    category: string;   // "" = 전체
+    q: string;          // (지금은 UI에서 숨김, 필요 시 확장)
+};
+
+type Props = {
+    open: boolean;
+    onClose: () => void;
+
+    value: FilterState;
+    onApply: (next: FilterState) => void;
+
+    addr1Options: string[];
+    addr2Options: string[];
+    categoryOptions: string[];
+
+    initialTab?: "region" | "category";
+};
+
+function cx(...arr: Array<string | false | undefined | null>) {
+    return arr.filter(Boolean).join(" ");
+}
+
+export default function StoreFiltersSheet({
+                                              open,
+                                              onClose,
+                                              value,
+                                              onApply,
+                                              addr1Options,
+                                              addr2Options,
+                                              categoryOptions,
+                                              initialTab = "region",
+                                          }: Props) {
+    const [tab, setTab] = useState<"region" | "category">(initialTab);
+    const [draft, setDraft] = useState<FilterState>(value);
+
+    useEffect(() => {
+        if (!open) return;
+        setTab(initialTab);
+        setDraft(value);
+    }, [open, initialTab, value]);
+
+    const canPickAddr2 = draft.addr1 !== "전체";
+
+    const addr2List = useMemo(() => {
+        if (!canPickAddr2) return [];
+        return addr2Options;
+    }, [addr2Options, canPickAddr2]);
+
+    // ESC로 닫기
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open, onClose]);
+
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50">
+            {/* overlay */}
+            <div
+                className="absolute inset-0 bg-black/40"
+                onClick={onClose}
+                aria-hidden="true"
+            />
+
+            {/* sheet */}
+            <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-2xl">
+                <div className="rounded-t-3xl border border-gray-200 bg-white shadow-2xl">
+                    {/* grabber */}
+                    <div className="flex items-center justify-center py-3">
+                        <div className="h-1.5 w-10 rounded-full bg-gray-200" />
+                    </div>
+
+                    {/* header */}
+                    <div className="px-5 pb-3">
+                        <div className="flex items-center justify-between">
+                            <div className="text-base font-semibold text-gray-900">필터</div>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="rounded-full px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+                            >
+                                닫기
+                            </button>
+                        </div>
+
+                        {/* tabs */}
+                        <div className="mt-3 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setTab("region")}
+                                className={cx(
+                                    "flex-1 rounded-full px-3 py-2 text-sm font-semibold",
+                                    tab === "region"
+                                        ? "bg-gray-900 text-white"
+                                        : "border bg-white text-gray-700 hover:bg-gray-50"
+                                )}
+                            >
+                                지역
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setTab("category")}
+                                className={cx(
+                                    "flex-1 rounded-full px-3 py-2 text-sm font-semibold",
+                                    tab === "category"
+                                        ? "bg-gray-900 text-white"
+                                        : "border bg-white text-gray-700 hover:bg-gray-50"
+                                )}
+                            >
+                                업종
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* content */}
+                    <div className="max-h-[68vh] overflow-y-auto px-5 pb-5">
+                        {tab === "region" ? (
+                            <div className="space-y-5">
+                                <div>
+                                    <div className="text-xs font-semibold text-gray-700">지역(1차)</div>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {addr1Options.map((a1) => {
+                                            const active = draft.addr1 === a1;
+                                            return (
+                                                <button
+                                                    key={a1}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        // 1차 바꾸면 2차는 초기화
+                                                        setDraft((d) => ({
+                                                            ...d,
+                                                            addr1: a1,
+                                                            addr2: "",
+                                                        }));
+                                                    }}
+                                                    className={cx(
+                                                        "rounded-full px-3 py-2 text-xs font-semibold transition",
+                                                        active
+                                                            ? "bg-gray-900 text-white"
+                                                            : "border bg-white text-gray-700 hover:bg-gray-50"
+                                                    )}
+                                                >
+                                                    {a1}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-xs font-semibold text-gray-700">지역(2차)</div>
+                                        {!canPickAddr2 && (
+                                            <div className="text-[11px] text-gray-500">
+                                                1차 지역을 먼저 선택하세요
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {canPickAddr2 ? (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {addr2List.length ? (
+                                                addr2List.map((a2) => {
+                                                    const active = draft.addr2 === a2;
+                                                    return (
+                                                        <button
+                                                            key={a2}
+                                                            type="button"
+                                                            onClick={() => setDraft((d) => ({ ...d, addr2: a2 }))}
+                                                            className={cx(
+                                                                "rounded-full px-3 py-2 text-xs font-semibold transition",
+                                                                active
+                                                                    ? "bg-gray-900 text-white"
+                                                                    : "border bg-white text-gray-700 hover:bg-gray-50"
+                                                            )}
+                                                        >
+                                                            {a2}
+                                                        </button>
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="rounded-2xl border bg-gray-50 p-3 text-xs text-gray-600">
+                                                    표시할 2차 지역이 없습니다.
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="mt-2 rounded-2xl border bg-gray-50 p-3 text-xs text-gray-600">
+                                            1차 지역을 선택하면 2차 지역이 표시됩니다.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="text-xs font-semibold text-gray-700">업종</div>
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDraft((d) => ({ ...d, category: "" }))}
+                                        className={cx(
+                                            "rounded-full px-3 py-2 text-xs font-semibold transition",
+                                            draft.category === ""
+                                                ? "bg-gray-900 text-white"
+                                                : "border bg-white text-gray-700 hover:bg-gray-50"
+                                        )}
+                                    >
+                                        전체
+                                    </button>
+
+                                    {categoryOptions.map((c) => {
+                                        const active = draft.category === c;
+                                        return (
+                                            <button
+                                                key={c}
+                                                type="button"
+                                                onClick={() => setDraft((d) => ({ ...d, category: c }))}
+                                                className={cx(
+                                                    "rounded-full px-3 py-2 text-xs font-semibold transition",
+                                                    active
+                                                        ? "bg-gray-900 text-white"
+                                                        : "border bg-white text-gray-700 hover:bg-gray-50"
+                                                )}
+                                            >
+                                                {c}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {!categoryOptions.length && (
+                                    <div className="rounded-2xl border bg-gray-50 p-3 text-xs text-gray-600">
+                                        선택 가능한 업종이 없습니다. (현재 조건에서 데이터가 없는 상태일 수 있어요)
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* footer */}
+                    <div className="flex gap-3 border-t bg-white px-5 py-4">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setDraft({
+                                    addr1: "전체",
+                                    addr2: "",
+                                    category: "",
+                                    q: "",
+                                })
+                            }
+                            className="flex-1 rounded-full border bg-white py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                        >
+                            초기화
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onApply(draft);
+                                onClose();
+                            }}
+                            className="flex-1 rounded-full bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-black"
+                        >
+                            적용
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

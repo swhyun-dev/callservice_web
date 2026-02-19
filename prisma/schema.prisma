@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // ✅ Prisma 7에서는 url을 여기 쓰면 안 됨
+}
+
+enum PostType {
+  NOTICE
+  NEWS
+}
+
+model Store {
+  id       Int     @id @default(autoincrement())
+  isActive Boolean @default(true)
+
+  name     String // 상호명
+  category String // 업종
+  phone    String // 번호(표시용, tel 링크용)
+
+  addr1         String // 1차 주소(시/도) 예: 서울/경기/제주
+  addr2         String // 2차 주소(시/군/구) 예: 강남구/성남시
+  addressDetail String // 상세주소
+
+  lat Float? // 지도 링크/가까운순용(옵션)
+  lng Float?
+
+  description String? // 소개글
+
+  images    StoreImage[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([addr1, addr2])
+  @@index([name])
+  @@index([category])
+}
+
+model StoreImage {
+  id        Int      @id @default(autoincrement())
+  storeId   Int
+  idx       Int
+  imageUrl  String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([storeId, idx])
+  @@index([storeId])
+}
+
+model Page {
+  id       Int     @id @default(autoincrement())
+  slug     String  @unique // "about" | "support"
+  title    String
+  content  String // HTML 또는 Markdown(초기엔 HTML 문자열로)
+  isActive Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id      Int      @id @default(autoincrement())
+  type    PostType
+  title   String
+  content String
+
+  isPinned Boolean @default(false)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type, isPinned, isActive, createdAt])
+}
