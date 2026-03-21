@@ -1,189 +1,209 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { prisma } from "@/lib/db";
+import {
+    MapPin,
+    Pencil,
+    Phone,
+    Plus,
+    Store,
+    Upload,
+} from "lucide-react";
 
-type StoreRow = {
-    id: number;
-    isActive: boolean;
-    name: string;
-    category: string;
-    phone: string;
-    addr1: string;
-    addr2: string;
-    addressDetail: string;
-    thumbUrl: string | null;
-};
+export const dynamic = "force-dynamic";
 
-const ADDR1 = [
-    "", "서울","경기","인천","강원","대전","세종","충북","충남","광주","전북","전남","대구","경북","부산","울산","경남","제주",
-];
+function formatAddress(
+    zipCode: string | null,
+    address: string | null,
+    addressDetail: string | null
+) {
+    return [zipCode, address, addressDetail].filter(Boolean).join(" / ");
+}
 
-export default function AdminStoresPage() {
-    const [q, setQ] = useState("");
-    const [addr1, setAddr1] = useState("");
-    const [active, setActive] = useState<"" | "1" | "0">("");
-    const [loading, setLoading] = useState(false);
-    const [items, setItems] = useState<StoreRow[]>([]);
-    const [err, setErr] = useState<string | null>(null);
+export default async function AdminStoresPage() {
+    const stores = await prisma.store.findMany({
+        orderBy: { id: "desc" },
+        include: {
+            images: {
+                orderBy: { idx: "asc" },
+                take: 1,
+            },
+        },
+    });
 
-    const qs = useMemo(() => {
-        const sp = new URLSearchParams();
-        if (q.trim()) sp.set("q", q.trim());
-        if (addr1) sp.set("addr1", addr1);
-        if (active) sp.set("isActive", active);
-        return sp.toString();
-    }, [q, addr1, active]);
-
-    async function load() {
-        setErr(null);
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/admin-stores?${qs}`, { cache: "no-store" });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json?.message || "불러오기 실패");
-            setItems(json.items || []);
-        } catch (e: any) {
-            setErr(e?.message || "에러");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    useEffect(() => {
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [qs]);
-
-    async function toggleActive(id: number, isActive: boolean) {
-        await fetch(`/api/admin-stores/${id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isActive }),
-        });
-        load();
-    }
+    const totalCount = stores.length;
+    const activeCount = stores.filter((store) => store.isActive).length;
+    const inactiveCount = totalCount - activeCount;
 
     return (
-        <div className="space-y-4">
-            <div className="rounded-3xl border bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <div className="text-lg font-bold">매장 관리</div>
-                        <div className="mt-1 text-sm text-gray-600">
-                            검색/등록/수정/활성화 관리
+        <>
+            <div className="space-y-6">
+                <section className="admin-card rounded-[28px] p-6 md:p-7">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <div className="text-2xl font-extrabold tracking-tight text-slate-900">
+                                매장 관리
+                            </div>
+                            <div className="mt-2 text-sm leading-6 text-slate-600">
+                                등록된 매장 정보를 확인하고 수정할 수 있습니다. 신규 매장 등록은
+                                우측 하단의 플로팅 + 버튼으로 빠르게 이동할 수 있습니다.
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                            <Link href="/admin/stores/import" className="admin-btn-outline">
+                                <Upload className="h-4 w-4" />
+                                <span>엑셀 업로드</span>
+                            </Link>
                         </div>
                     </div>
-                    <Link
-                        href="/admin/stores/new"
-                        className="admin-btn rounded-2xl px-4 py-2 text-sm font-semibold"
-                    >
-                        + 매장 등록
-                    </Link>
-                    <Link
-                        href="/admin/stores/import"
-                        className="admin-btn-outline rounded-2xl px-4 py-2 text-sm font-semibold hover:bg-gray-50"
-                    >
-                        엑셀 등록
-                    </Link>
-                </div>
 
-                <div className="mt-4 grid gap-2 md:grid-cols-4">
-                    <input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        placeholder="검색(이름/업종/주소/전화)"
-                        className="rounded-2xl border px-4 py-3 text-sm"
-                    />
+                    <div className="mt-6 grid gap-4 md:grid-cols-3">
+                        <div className="admin-stat-card">
+                            <div className="admin-stat-label">전체 매장</div>
+                            <div className="admin-stat-value">{totalCount}</div>
+                            <div className="admin-stat-desc">현재 등록된 전체 매장 수</div>
+                        </div>
 
-                    <select
-                        value={addr1}
-                        onChange={(e) => setAddr1(e.target.value)}
-                        className="rounded-2xl border bg-white px-4 py-3 text-sm"
-                    >
-                        {ADDR1.map((v) => (
-                            <option key={v} value={v}>
-                                {v ? v : "전체 지역"}
-                            </option>
-                        ))}
-                    </select>
+                        <div className="admin-stat-card">
+                            <div className="admin-stat-label">활성 매장</div>
+                            <div className="admin-stat-value">{activeCount}</div>
+                            <div className="admin-stat-desc">사용자 페이지에 노출 중인 매장</div>
+                        </div>
 
-                    <select
-                        value={active}
-                        onChange={(e) => setActive(e.target.value as any)}
-                        className="rounded-2xl border bg-white px-4 py-3 text-sm"
-                    >
-                        <option value="">전체 상태</option>
-                        <option value="1">활성</option>
-                        <option value="0">비활성</option>
-                    </select>
+                        <div className="admin-stat-card">
+                            <div className="admin-stat-label">비활성 매장</div>
+                            <div className="admin-stat-value">{inactiveCount}</div>
+                            <div className="admin-stat-desc">숨김 또는 점검 상태의 매장</div>
+                        </div>
+                    </div>
+                </section>
 
-                    <button
-                        type="button"
-                        onClick={load}
-                        className="rounded-2xl border bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50"
-                    >
-                        {loading ? "불러오는 중…" : "새로고침"}
-                    </button>
-                </div>
-
-                {err && <div className="mt-3 text-sm text-red-600">{err}</div>}
-            </div>
-
-            <div className="rounded-3xl border bg-white shadow-sm">
-                <div className="divide-y">
-                    {items.map((s) => (
-                        <div key={s.id} className="flex items-center gap-4 p-4">
-                            <div className="h-14 w-14 overflow-hidden rounded-2xl bg-gray-100">
-                                {s.thumbUrl ? (
-                                    <img src={s.thumbUrl} alt={s.name} className="h-full w-full object-cover" />
-                                ) : null}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                    <div className="truncate text-sm font-semibold">{s.name}</div>
-                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">
-                    {s.category}
-                  </span>
-                                    {!s.isActive && (
-                                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] text-red-700">
-                      비활성
-                    </span>
-                                    )}
-                                </div>
-                                <div className="mt-1 line-clamp-1 text-xs text-gray-600">
-                                    {s.addr1} {s.addr2} {s.addressDetail}
-                                </div>
-                                <div className="mt-1 text-xs text-gray-800">{s.phone}</div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <Link
-                                    href={`/src/app/admin/stores/${s.id}/edit`}
-                                    className="rounded-full border bg-white px-3 py-2 text-xs font-semibold hover:bg-gray-50"
-                                >
-                                    수정
-                                </Link>
-
-                                <button
-                                    type="button"
-                                    onClick={() => toggleActive(s.id, !s.isActive)}
-                                    className="rounded-full bg-gray-900 px-3 py-2 text-xs font-semibold text-white"
-                                >
-                                    {s.isActive ? "비활성" : "활성"}
-                                </button>
+                <section className="admin-card rounded-[28px] p-6 md:p-7">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                        <div>
+                            <div className="admin-section-title">매장 목록</div>
+                            <div className="admin-section-desc">
+                                최근 등록 순으로 정렬되어 있습니다.
                             </div>
                         </div>
-                    ))}
 
-                    {!loading && items.length === 0 && (
-                        <div className="p-8 text-center text-sm text-gray-500">
-                            데이터가 없습니다.
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                            총 <span className="font-bold text-slate-900">{totalCount}</span>개
+                        </div>
+                    </div>
+
+                    {stores.length === 0 ? (
+                        <div className="mt-6 rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
+                                <Store className="h-6 w-6 text-slate-400" />
+                            </div>
+                            <div className="mt-4 text-lg font-bold text-slate-900">
+                                등록된 매장이 없습니다
+                            </div>
+                            <div className="mt-2 text-sm text-slate-600">
+                                우측 하단의 + 버튼을 눌러 첫 매장을 등록해보세요.
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-6 grid gap-4">
+                            {stores.map((store) => {
+                                const thumb = store.images[0]?.imageUrl ?? null;
+                                const fullAddress = formatAddress(
+                                    store.addr2,
+                                    store.addr1,
+                                    store.addressDetail
+                                );
+
+                                return (
+                                    <div
+                                        key={store.id}
+                                        className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-[1px] hover:shadow-md"
+                                    >
+                                        <div className="flex flex-col md:flex-row">
+                                            <div className="h-44 w-full shrink-0 bg-slate-100 md:h-auto md:w-56">
+                                                {thumb ? (
+                                                    <img
+                                                        src={thumb}
+                                                        alt={store.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full min-h-44 items-center justify-center text-sm font-medium text-slate-400">
+                                                        이미지 없음
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-1 flex-col p-5 md:p-6">
+                                                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                  className={
+                                      store.isActive ? "admin-badge" : "admin-btn-soft"
+                                  }
+                              >
+                                {store.isActive ? "노출중" : "비활성"}
+                              </span>
+
+                                                            {store.category ? (
+                                                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                                  {store.category}
+                                </span>
+                                                            ) : null}
+                                                        </div>
+
+                                                        <div className="mt-3 text-xl font-extrabold tracking-tight text-slate-900">
+                                                            {store.name}
+                                                        </div>
+
+                                                        <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                                            <div className="flex items-start gap-2">
+                                                                <Phone className="mt-0.5 h-4 w-4 text-slate-400" />
+                                                                <span>{store.phone || "-"}</span>
+                                                            </div>
+
+                                                            <div className="flex items-start gap-2">
+                                                                <MapPin className="mt-0.5 h-4 w-4 text-slate-400" />
+                                                                <span>{fullAddress || "-"}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <Link
+                                                            href={`/admin/stores/${store.id}/edit`}
+                                                            className="admin-btn-outline"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                            <span>수정</span>
+                                                        </Link>
+                                                    </div>
+                                                </div>
+
+                                                {store.description ? (
+                                                    <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                                                        {store.description}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
-                </div>
+                </section>
             </div>
-        </div>
+
+            <Link
+                href="/admin/stores/new"
+                aria-label="매장 등록"
+                title="매장 등록"
+                className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+            >
+                <Plus className="h-6 w-6" />
+            </Link>
+        </>
     );
 }

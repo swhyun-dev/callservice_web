@@ -6,18 +6,23 @@ function bad(msg: string, status = 400) {
     return NextResponse.json({ ok: false, message: msg }, { status });
 }
 
+function normalizeText(v: unknown) {
+    return String(v ?? "").trim();
+}
+
 export async function GET(req: Request) {
-    if (!isAdminAuthed()) return bad("Unauthorized", 401);
+    if (!(await isAdminAuthed())) return bad("Unauthorized", 401);
 
     const url = new URL(req.url);
-    const q = (url.searchParams.get("q") || "").trim();
-    const addr1 = (url.searchParams.get("addr1") || "").trim();
-    const isActive = url.searchParams.get("isActive"); // "1" | "0" | null
+    const q = normalizeText(url.searchParams.get("q"));
+    const address = normalizeText(url.searchParams.get("address"));
+    const isActive = url.searchParams.get("isActive");
 
     const where: any = {};
+
     if (isActive === "1") where.isActive = true;
     if (isActive === "0") where.isActive = false;
-    if (addr1) where.addr1 = addr1;
+    if (address) where.addr1 = { contains: address, mode: "insensitive" };
 
     if (q) {
         where.OR = [
@@ -45,12 +50,12 @@ export async function GET(req: Request) {
             name: s.name,
             category: s.category,
             phone: s.phone,
-            addr1: s.addr1,
-            addr2: s.addr2,
-            addressDetail: s.addressDetail,
+            zipCode: s.addr2 ?? "",
+            address: s.addr1 ?? "",
+            addressDetail: s.addressDetail ?? "",
             lat: s.lat,
             lng: s.lng,
-            description: s.description,
+            description: s.description ?? "",
             thumbUrl: s.images[0]?.imageUrl || null,
             updatedAt: s.updatedAt,
             createdAt: s.createdAt,
@@ -59,19 +64,19 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-    if (!isAdminAuthed()) return bad("Unauthorized", 401);
+    if (!(await isAdminAuthed())) return bad("Unauthorized", 401);
 
     const body = await req.json().catch(() => null);
     if (!body) return bad("Invalid JSON");
 
-    const name = String(body.name || "").trim();
-    const category = String(body.category || "").trim();
-    const phone = String(body.phone || "").trim();
-    const addr1 = String(body.addr1 || "").trim();
-    const addr2 = String(body.addr2 || "").trim();
-    const addressDetail = String(body.addressDetail || "").trim();
-    const description = String(body.description || "").trim();
-    const thumbUrl = String(body.thumbUrl || "").trim();
+    const name = normalizeText(body.name);
+    const category = normalizeText(body.category);
+    const phone = normalizeText(body.phone);
+    const zipCode = normalizeText(body.zipCode);
+    const address = normalizeText(body.address);
+    const addressDetail = normalizeText(body.addressDetail);
+    const description = normalizeText(body.description);
+    const thumbUrl = normalizeText(body.thumbUrl);
     const isActive = Boolean(body.isActive ?? true);
 
     const lat = body.lat === "" || body.lat == null ? null : Number(body.lat);
@@ -80,7 +85,7 @@ export async function POST(req: Request) {
     if (!name) return bad("매장명을 입력하세요.");
     if (!category) return bad("업종을 입력하세요.");
     if (!phone) return bad("전화번호를 입력하세요.");
-    if (!addr1) return bad("1차 지역을 입력하세요.");
+    if (!address) return bad("주소를 입력하세요.");
 
     const created = await prisma.store.create({
         data: {
@@ -88,8 +93,8 @@ export async function POST(req: Request) {
             name,
             category,
             phone,
-            addr1,
-            addr2,
+            addr1: address,
+            addr2: zipCode,
             addressDetail,
             lat: Number.isFinite(lat) ? lat : null,
             lng: Number.isFinite(lng) ? lng : null,

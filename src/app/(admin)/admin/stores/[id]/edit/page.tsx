@@ -1,207 +1,230 @@
-"use client";
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import {
+    MapPin,
+    Pencil,
+    Phone,
+    Plus,
+    Store,
+    Upload,
+} from "lucide-react";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+export const dynamic = "force-dynamic";
 
-export default function AdminStoreEditPage() {
-    const router = useRouter();
-    const params = useParams<{ id: string }>();
-    const id = Number(params.id);
+function formatAddress(
+    zipCode: string | null,
+    address: string | null,
+    addressDetail: string | null
+) {
+    return [zipCode, address, addressDetail].filter(Boolean).join(" / ");
+}
 
-    const [loading, setLoading] = useState(false);
-    const [err, setErr] = useState<string | null>(null);
-
-    const [form, setForm] = useState({
-        isActive: true,
-        name: "",
-        category: "",
-        phone: "",
-        addr1: "",
-        addr2: "",
-        addressDetail: "",
-        lat: "",
-        lng: "",
-        thumbUrl: "",
-        description: "",
+export default async function AdminStoresPage() {
+    const stores = await prisma.store.findMany({
+        orderBy: { id: "desc" },
+        include: {
+            images: {
+                orderBy: { idx: "asc" },
+                take: 1,
+            },
+        },
     });
 
-    function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
-        setForm((p) => ({ ...p, [k]: v }));
-    }
-
-    async function load() {
-        setErr(null);
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/admin-stores/${id}`, { cache: "no-store" });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json?.message || "불러오기 실패");
-
-            const it = json.item;
-            setForm({
-                isActive: Boolean(it.isActive),
-                name: it.name || "",
-                category: it.category || "",
-                phone: it.phone || "",
-                addr1: it.addr1 || "",
-                addr2: it.addr2 || "",
-                addressDetail: it.addressDetail || "",
-                lat: it.lat == null ? "" : String(it.lat),
-                lng: it.lng == null ? "" : String(it.lng),
-                thumbUrl: it.thumbUrl || "",
-                description: it.description || "",
-            });
-        } catch (e: any) {
-            setErr(e?.message || "에러");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    useEffect(() => {
-        if (!Number.isFinite(id)) return;
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
-
-    async function submit() {
-        setErr(null);
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/admin-stores/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
-            });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json?.message || "저장 실패");
-            router.replace("/admin/stores");
-        } catch (e: any) {
-            setErr(e?.message || "에러");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function remove() {
-        if (!confirm("정말 삭제할까요?")) return;
-        setLoading(true);
-        try {
-            await fetch(`/api/admin-stores/${id}`, { method: "DELETE" });
-            router.replace("/admin/stores");
-        } finally {
-            setLoading(false);
-        }
-    }
+    const totalCount = stores.length;
+    const activeCount = stores.filter((store) => store.isActive).length;
+    const inactiveCount = totalCount - activeCount;
 
     return (
-        <div className="space-y-4">
-            <div className="rounded-3xl border bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                    <div className="text-lg font-bold">매장 수정</div>
-                    <button
-                        type="button"
-                        onClick={remove}
-                        className="rounded-2xl border bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-gray-50"
-                    >
-                        삭제
-                    </button>
-                </div>
+        <>
+            <div className="space-y-6">
+                <section className="admin-card rounded-[28px] p-6 md:p-7">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <div className="text-2xl font-extrabold tracking-tight text-slate-900">
+                                매장 관리
+                            </div>
+                            <div className="mt-2 text-sm leading-6 text-slate-600">
+                                등록된 매장 정보를 확인하고 수정할 수 있습니다. 신규 매장 등록은
+                                우측 하단의 플로팅 + 버튼으로 빠르게 이동할 수 있습니다.
+                            </div>
+                        </div>
 
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                    <label className="space-y-1">
-                        <div className="text-xs text-gray-600">매장명*</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.name} onChange={(e) => set("name", e.target.value)} />
-                    </label>
+                        <div className="flex flex-wrap gap-2">
+                            <Link href="/admin/stores/import" className="admin-btn-outline">
+                                <Upload className="h-4 w-4" />
+                                <span>엑셀 업로드</span>
+                            </Link>
+                        </div>
+                    </div>
 
-                    <label className="space-y-1">
-                        <div className="text-xs text-gray-600">업종*</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.category} onChange={(e) => set("category", e.target.value)} />
-                    </label>
+                    <div className="mt-6 grid gap-4 md:grid-cols-3">
+                        <div className="admin-stat-card">
+                            <div className="admin-stat-label">전체 매장</div>
+                            <div className="admin-stat-value">{totalCount}</div>
+                            <div className="admin-stat-desc">현재 등록된 전체 매장 수</div>
+                        </div>
 
-                    <label className="space-y-1">
-                        <div className="text-xs text-gray-600">전화번호*</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-                    </label>
+                        <div className="admin-stat-card">
+                            <div className="admin-stat-label">활성 매장</div>
+                            <div className="admin-stat-value">{activeCount}</div>
+                            <div className="admin-stat-desc">사용자 페이지에 노출 중인 매장</div>
+                        </div>
 
-                    <label className="space-y-1">
-                        <div className="text-xs text-gray-600">1차 지역*</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.addr1} onChange={(e) => set("addr1", e.target.value)} />
-                    </label>
+                        <div className="admin-stat-card">
+                            <div className="admin-stat-label">비활성 매장</div>
+                            <div className="admin-stat-value">{inactiveCount}</div>
+                            <div className="admin-stat-desc">숨김 또는 점검 상태의 매장</div>
+                        </div>
+                    </div>
+                </section>
 
-                    <label className="space-y-1">
-                        <div className="text-xs text-gray-600">2차 지역</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.addr2} onChange={(e) => set("addr2", e.target.value)} />
-                    </label>
+                <section className="admin-card rounded-[28px] p-6 md:p-7">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                        <div>
+                            <div className="admin-section-title">매장 목록</div>
+                            <div className="admin-section-desc">
+                                최근 등록 순으로 정렬되어 있습니다.
+                            </div>
+                        </div>
 
-                    <label className="space-y-1 md:col-span-2">
-                        <div className="text-xs text-gray-600">상세 주소</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.addressDetail} onChange={(e) => set("addressDetail", e.target.value)} />
-                    </label>
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                            총 <span className="font-bold text-slate-900">{totalCount}</span>개
+                        </div>
+                    </div>
 
-                    <label className="space-y-1">
-                        <div className="text-xs text-gray-600">위도(lat)</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.lat} onChange={(e) => set("lat", e.target.value)} />
-                    </label>
+                    {stores.length === 0 ? (
+                        <div className="mt-6 rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
+                                <Store className="h-6 w-6 text-slate-400" />
+                            </div>
+                            <div className="mt-4 text-lg font-bold text-slate-900">
+                                등록된 매장이 없습니다
+                            </div>
+                            <div className="mt-2 text-sm text-slate-600">
+                                우측 하단의 + 버튼을 눌러 첫 매장을 등록해보세요.
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-6 grid gap-4">
+                            {stores.map((store) => {
+                                const thumb = store.images[0]?.imageUrl ?? null;
+                                const fullAddress = formatAddress(
+                                    store.addr2,
+                                    store.addr1,
+                                    store.addressDetail
+                                );
 
-                    <label className="space-y-1">
-                        <div className="text-xs text-gray-600">경도(lng)</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.lng} onChange={(e) => set("lng", e.target.value)} />
-                    </label>
+                                return (
+                                    <div
+                                        key={store.id}
+                                        className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-[1px] hover:shadow-md"
+                                    >
+                                        <div className="flex flex-col md:flex-row">
+                                            <div className="h-44 w-full shrink-0 bg-slate-100 md:h-auto md:w-56">
+                                                {thumb ? (
+                                                    <img
+                                                        src={thumb}
+                                                        alt={store.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full min-h-44 items-center justify-center text-sm font-medium text-slate-400">
+                                                        이미지 없음
+                                                    </div>
+                                                )}
+                                            </div>
 
-                    <label className="space-y-1 md:col-span-2">
-                        <div className="text-xs text-gray-600">썸네일 이미지 URL</div>
-                        <input className="w-full rounded-2xl border px-4 py-3 text-sm"
-                               value={form.thumbUrl} onChange={(e) => set("thumbUrl", e.target.value)} />
-                    </label>
+                                            <div className="flex flex-1 flex-col p-5 md:p-6">
+                                                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                  className={
+                                      store.isActive ? "admin-badge" : "admin-btn-soft"
+                                  }
+                              >
+                                {store.isActive ? "노출중" : "비활성"}
+                              </span>
 
-                    <label className="space-y-1 md:col-span-2">
-                        <div className="text-xs text-gray-600">소개글</div>
-                        <textarea className="w-full rounded-2xl border px-4 py-3 text-sm"
-                                  rows={4}
-                                  value={form.description}
-                                  onChange={(e) => set("description", e.target.value)}
-                        />
-                    </label>
+                                                            {store.category ? (
+                                                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                                  {store.category}
+                                </span>
+                                                            ) : null}
+                                                        </div>
 
-                    <label className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            checked={form.isActive}
-                            onChange={(e) => set("isActive", e.target.checked)}
-                        />
-                        <span className="text-sm">활성</span>
-                    </label>
-                </div>
+                                                        <div className="mt-3 text-xl font-extrabold tracking-tight text-slate-900">
+                                                            {store.name}
+                                                        </div>
 
-                {err && <div className="mt-3 text-sm text-red-600">{err}</div>}
+                                                        <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                                            <div className="flex items-start gap-2">
+                                                                <Phone className="mt-0.5 h-4 w-4 text-slate-400" />
+                                                                <span>{store.phone || "-"}</span>
+                                                            </div>
 
-                <div className="mt-6 flex gap-2">
-                    <button
-                        type="button"
-                        onClick={() => router.back()}
-                        className="rounded-2xl border bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50"
-                    >
-                        취소
-                    </button>
-                    <button
-                        type="button"
-                        onClick={submit}
-                        disabled={loading}
-                        className="rounded-2xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-                    >
-                        {loading ? "저장 중…" : "저장"}
-                    </button>
-                </div>
+                                                            <div className="flex items-start gap-2">
+                                                                <MapPin className="mt-0.5 h-4 w-4 text-slate-400" />
+                                                                <span>{fullAddress || "-"}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <Link
+                                                            href={`/admin/stores/${store.id}/edit`}
+                                                            className="admin-btn-outline"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                            <span>수정</span>
+                                                        </Link>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-xs text-slate-500 sm:grid-cols-4">
+                                                    <div>
+                                                        <div className="font-semibold text-slate-700">매장 ID</div>
+                                                        <div className="mt-1">{store.id}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-slate-700">우편번호</div>
+                                                        <div className="mt-1">{store.addr2 || "-"}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-slate-700">주소</div>
+                                                        <div className="mt-1 break-all">{store.addr1 || "-"}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-slate-700">상세주소</div>
+                                                        <div className="mt-1 break-all">
+                                                            {store.addressDetail || "-"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {store.description ? (
+                                                    <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                                                        {store.description}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </section>
             </div>
-        </div>
+
+            <Link
+                href="/admin/stores/new"
+                aria-label="매장 등록"
+                title="매장 등록"
+                className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+            >
+                <Plus className="h-6 w-6" />
+            </Link>
+        </>
     );
 }
