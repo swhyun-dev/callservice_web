@@ -1,5 +1,5 @@
 "use client";
-
+export const dynamic = 'force-dynamic';
 import { useEffect, useMemo, useState } from "react";
 import StoreCard from "@/components/stores/StoreCard";
 import StoreListItem from "@/components/stores/StoreListItem";

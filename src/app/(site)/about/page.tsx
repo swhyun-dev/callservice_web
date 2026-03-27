@@ -1,3 +1,5 @@
+// src/app/(site)/about/page.tsx
+export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/db";
 
 export default async function AboutPage() {
