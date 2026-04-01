@@ -22,9 +22,9 @@ export default function Footer() {
                         고객센터
                     </Link>
                     <span className="text-white/40">|</span>
-                    <button type="button" className="transition hover:opacity-80">
+                    <Link href="/advertise" className="transition hover:opacity-80">
                         광고안내
-                    </button>
+                    </Link>
                 </div>
 
                 <div className="mt-6 space-y-1 text-sm leading-6 text-white/70">
