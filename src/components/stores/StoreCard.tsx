@@ -1,3 +1,4 @@
+// src/components/stores/StoreCard.tsx
 import Link from "next/link";
 
 function formatPhone(phone: string) {
@@ -19,7 +20,7 @@ export default function StoreCard(props: {
     return (
         <Link
             href={`/stores/${props.id}`}
-            prefetch // ✅ 상세 페이지 미리 로드(체감 UX 좋아짐)
+            prefetch
             className="group block overflow-hidden rounded-3xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
         >
             <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
@@ -50,8 +51,8 @@ export default function StoreCard(props: {
                 </div>
 
                 <div className="mt-3 space-y-1.5 text-sm text-gray-700">
+                    <div className="font-medium text-gray-900">전화 {formatPhone(props.phone)}</div>
                     <div className="line-clamp-2">{fullAddr}</div>
-                    <div className="font-medium text-gray-900">{formatPhone(props.phone)}</div>
                 </div>
             </div>
         </Link>

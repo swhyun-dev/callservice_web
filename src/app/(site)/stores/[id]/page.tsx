@@ -1,3 +1,4 @@
+// src/app/(site)/stores/[id]/page.tsx
 export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/db";
 import Link from "next/link";
@@ -27,13 +28,12 @@ function telHref(phone: string) {
     return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
-// ✅ 핵심: params가 Promise일 수 있으므로 await로 풀기
 export default async function StoreDetailPage({
                                                   params,
                                               }: {
     params: Promise<{ id: string }>;
 }) {
-    const { id } = await params; // ✅ 여기!
+    const { id } = await params;
     const storeId = Number(id);
 
     if (!Number.isFinite(storeId)) {
@@ -83,8 +83,8 @@ export default async function StoreDetailPage({
                     ← 매장 목록
                 </Link>
                 <span className="rounded-full bg-gray-900 px-3 py-1 text-xs text-white">
-          {store.category}
-        </span>
+                    {store.category}
+                </span>
             </div>
 
             <section className="overflow-hidden rounded-3xl border bg-white shadow-sm">
@@ -105,15 +105,18 @@ export default async function StoreDetailPage({
                 <div className="space-y-5 p-6">
                     <h1 className="text-xl font-bold text-gray-900">{store.name}</h1>
 
+                    {/* ✅ 순서 변경 + 문구 변경 */}
                     <div className="space-y-3 rounded-2xl bg-gray-50 p-4 text-sm">
                         <div>
-                            <div className="text-xs text-gray-500">주소</div>
-                            <div className="mt-1 text-gray-900">{fullAddress}</div>
+                            <div className="text-xs text-gray-500">전화</div>
+                            <div className="mt-1 font-medium text-gray-900">
+                                {store.phone}
+                            </div>
                         </div>
 
                         <div>
-                            <div className="text-xs text-gray-500">전화번호</div>
-                            <div className="mt-1 font-medium text-gray-900">{store.phone}</div>
+                            <div className="text-xs text-gray-500">주소</div>
+                            <div className="mt-1 text-gray-900">{fullAddress}</div>
                         </div>
                     </div>
 
@@ -137,7 +140,9 @@ export default async function StoreDetailPage({
 
                     {store.description && (
                         <div>
-                            <div className="text-sm font-semibold text-gray-900">매장 소개</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                                매장 소개
+                            </div>
                             <p className="mt-2 whitespace-pre-line text-sm text-gray-700">
                                 {store.description}
                             </p>
@@ -148,7 +153,9 @@ export default async function StoreDetailPage({
 
             {store.images.length > 1 && (
                 <section className="rounded-3xl border bg-white p-6 shadow-sm">
-                    <div className="mb-3 text-sm font-semibold text-gray-900">추가 이미지</div>
+                    <div className="mb-3 text-sm font-semibold text-gray-900">
+                        추가 이미지
+                    </div>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                         {store.images.slice(1).map((img) => (
                             <div

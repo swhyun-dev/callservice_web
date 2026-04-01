@@ -1,3 +1,4 @@
+// src/components/stores/StoreListItem.tsx
 import Link from "next/link";
 
 function formatPhone(phone: string) {
@@ -22,7 +23,6 @@ export default function StoreListItem(props: {
             className="block border-b bg-white px-4 py-4 hover:bg-gray-50"
         >
             <div className="flex gap-3">
-                {/* 왼쪽 이미지 */}
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-gray-100">
                     {props.thumbUrl ? (
                         <img
@@ -38,7 +38,6 @@ export default function StoreListItem(props: {
                     )}
                 </div>
 
-                {/* 오른쪽 정보 */}
                 <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -54,10 +53,10 @@ export default function StoreListItem(props: {
                         <div className="text-xs text-gray-400">›</div>
                     </div>
 
-                    <div className="mt-2 line-clamp-1 text-sm text-gray-700">{fullAddr}</div>
-                    <div className="mt-1 text-sm font-medium text-gray-900">
-                        {formatPhone(props.phone)}
+                    <div className="mt-2 text-sm font-medium text-gray-900">
+                        전화 {formatPhone(props.phone)}
                     </div>
+                    <div className="mt-1 line-clamp-1 text-sm text-gray-700">{fullAddr}</div>
                 </div>
             </div>
         </Link>
