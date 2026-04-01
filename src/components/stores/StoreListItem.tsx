@@ -1,5 +1,6 @@
 // src/components/stores/StoreListItem.tsx
 import Link from "next/link";
+import { Phone } from "lucide-react";
 
 function formatPhone(phone: string) {
     return phone.replace(/\s+/g, " ").trim();
@@ -53,9 +54,11 @@ export default function StoreListItem(props: {
                         <div className="text-xs text-gray-400">›</div>
                     </div>
 
-                    <div className="mt-2 text-sm font-medium text-gray-900">
-                        전화 {formatPhone(props.phone)}
+                    <div className="mt-2 flex items-center gap-1.5 text-sm font-medium text-gray-900">
+                        <Phone className="h-4 w-4 shrink-0 text-gray-700" />
+                        <span>{formatPhone(props.phone)}</span>
                     </div>
+
                     <div className="mt-1 line-clamp-1 text-sm text-gray-700">{fullAddr}</div>
                 </div>
             </div>

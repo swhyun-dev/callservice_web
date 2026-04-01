@@ -14,9 +14,13 @@ export default function Footer() {
                         회사소개
                     </Link>
                     <span className="text-white/40">|</span>
-                    <button type="button" className="transition hover:opacity-80">
+                    <Link href="/terms" className="transition hover:opacity-80">
                         이용약관
-                    </button>
+                    </Link>
+                    <span className="text-white/40">|</span>
+                    <Link href="/support" className="transition hover:opacity-80">
+                        고객센터
+                    </Link>
                     <span className="text-white/40">|</span>
                     <button type="button" className="transition hover:opacity-80">
                         광고안내
