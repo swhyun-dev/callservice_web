@@ -1,7 +1,7 @@
 // src/components/stores/StoreFilterBarCarrot.tsx
 "use client";
 
-import { Search, ChevronDown, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export type FilterState = {
@@ -57,6 +57,19 @@ export default function StoreFilterBarCarrot(props: Props) {
         };
     }, [openSheet, searchOpen]);
 
+    useEffect(() => {
+        const openFromTopNav = () => {
+            setSearchText(value.q);
+            setSearchOpen(true);
+        };
+
+        window.addEventListener("open-store-search", openFromTopNav);
+
+        return () => {
+            window.removeEventListener("open-store-search", openFromTopNav);
+        };
+    }, [value.q]);
+
     const addr2Disabled = value.addr1 === "전체";
 
     const currentOptions = useMemo(() => {
@@ -94,11 +107,6 @@ export default function StoreFilterBarCarrot(props: Props) {
         onSearchAction();
     }
 
-    function openSearchModal() {
-        setSearchText(value.q);
-        setSearchOpen(true);
-    }
-
     function submitKeywordSearch() {
         onChangeAction({
             ...value,
@@ -111,16 +119,15 @@ export default function StoreFilterBarCarrot(props: Props) {
     return (
         <>
             <div className="sticky top-0 z-30 -mx-4 border-b bg-white/95 px-4 py-3 backdrop-blur">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex items-center gap-2">
                     <button
                         type="button"
                         disabled={props.loading}
                         onClick={() => setOpenSheet("addr1")}
-                        className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm"
+                        className="flex-1 min-w-0 inline-flex h-11 items-center justify-between rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm"
                     >
-                        <span>광역시/도</span>
-                        <span className="text-gray-500">{value.addr1 === "전체" ? "전체" : value.addr1}</span>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                        <span className="truncate">광역시/도 {value.addr1 === "전체" ? "전체" : value.addr1}</span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
                     </button>
 
                     <button
@@ -128,35 +135,24 @@ export default function StoreFilterBarCarrot(props: Props) {
                         disabled={props.loading || addr2Disabled}
                         onClick={() => setOpenSheet("addr2")}
                         className={cx(
-                            "inline-flex h-11 shrink-0 items-center gap-1 rounded-full border px-4 text-sm font-semibold shadow-sm",
+                            "flex-1 min-w-0 inline-flex h-11 items-center justify-between rounded-full border px-4 text-sm font-semibold shadow-sm",
                             addr2Disabled
                                 ? "border-gray-200 bg-gray-100 text-gray-400"
                                 : "border-gray-300 bg-white text-gray-900"
                         )}
                     >
-                        <span>시/군/구</span>
-                        <span className="text-gray-500">{value.addr2 || "전체"}</span>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                        <span className="truncate">시/군/구 {value.addr2 || "전체"}</span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
                     </button>
 
                     <button
                         type="button"
                         disabled={props.loading}
                         onClick={() => setOpenSheet("category")}
-                        className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm"
+                        className="flex-1 min-w-0 inline-flex h-11 items-center justify-between rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm"
                     >
-                        <span>업종</span>
-                        <span className="text-gray-500">{value.category || "전체"}</span>
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                    </button>
-
-                    <button
-                        type="button"
-                        aria-label="검색 열기"
-                        onClick={openSearchModal}
-                        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-gray-300 bg-white text-gray-900 shadow-sm"
-                    >
-                        <Search className="h-4 w-4" />
+                        <span className="truncate">업종 {value.category || "전체"}</span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
                     </button>
                 </div>
             </div>
@@ -237,10 +233,13 @@ export default function StoreFilterBarCarrot(props: Props) {
                             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-gray-200" />
 
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="text-base font-bold text-gray-900">매장 검색</div>
-                                    <div className="mt-1 text-sm text-gray-500">
-                                        상호명, 업종 등으로 검색할 수 있습니다.
+                                <div className="flex items-center gap-2">
+                                    <Search className="h-5 w-5 text-gray-700" />
+                                    <div>
+                                        <div className="text-base font-bold text-gray-900">매장 검색</div>
+                                        <div className="mt-1 text-sm text-gray-500">
+                                            상호명, 업종 등으로 검색할 수 있습니다.
+                                        </div>
                                     </div>
                                 </div>
 
