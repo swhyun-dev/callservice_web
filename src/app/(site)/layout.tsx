@@ -8,7 +8,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         <div className="min-h-dvh bg-gray-50 text-gray-900">
             <TopNav />
 
-            <main className="mx-auto w-full max-w-6xl px-4 pb-6 pt-[64px]">
+            <main className="mx-auto w-full max-w-6xl px-4 pb-6 pt-0">
                 {children}
             </main>
 
