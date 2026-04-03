@@ -9,8 +9,6 @@ export default function TopNav() {
     return (
         <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
             <div className="relative mx-auto flex h-16 max-w-6xl items-center px-4">
-
-                {/* 검색 버튼 */}
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     <button
                         type="button"
@@ -22,17 +20,18 @@ export default function TopNav() {
                     </button>
                 </div>
 
-                {/* 중앙 로고 */}
                 <div className="mx-auto">
-                    <Link href="/" className="flex items-center justify-center">
-                        <Image
-                            src="/logo.png"
-                            alt="CALLSERVICE"
-                            width={260}
-                            height={60}
-                            priority
-                            className="object-contain"
-                        />
+                    <Link href="/" className="block">
+                        <div className="relative h-10 w-[220px] overflow-hidden">
+                            <Image
+                                src="/logo.png"
+                                alt="CALLSERVICE"
+                                fill
+                                priority
+                                className="object-contain scale-[1.9]"
+                                style={{ objectPosition: "center center" }}
+                            />
+                        </div>
                     </Link>
                 </div>
             </div>
