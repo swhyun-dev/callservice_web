@@ -27,6 +27,54 @@ function cx(...arr: Array<string | false | undefined | null>) {
     return arr.filter(Boolean).join(" ");
 }
 
+function FilterButton(props: {
+    title: string;
+    valueText: string;
+    disabled?: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            disabled={props.disabled}
+            onClick={props.onClick}
+            className={cx(
+                "w-full min-w-0 min-h-[56px] rounded-[22px] border px-3 py-2 shadow-sm transition touch-manipulation",
+                "flex items-center justify-between bg-white text-left",
+                props.disabled
+                    ? "border-gray-200 bg-gray-100 text-gray-400"
+                    : "border-gray-300 text-gray-900 active:scale-[0.99]"
+            )}
+        >
+            <div className="min-w-0 flex-1 pointer-events-none">
+                <div
+                    className={cx(
+                        "text-[11px] leading-none",
+                        props.disabled ? "text-gray-400" : "text-gray-500"
+                    )}
+                >
+                    {props.title}
+                </div>
+                <div
+                    className={cx(
+                        "mt-1 truncate text-sm font-semibold leading-tight",
+                        props.disabled ? "text-gray-400" : "text-gray-900"
+                    )}
+                >
+                    {props.valueText}
+                </div>
+            </div>
+
+            <ChevronDown
+                className={cx(
+                    "ml-2 h-4 w-4 shrink-0 pointer-events-none",
+                    props.disabled ? "text-gray-300" : "text-gray-400"
+                )}
+            />
+        </button>
+    );
+}
+
 export default function StoreFilterBarCarrot(props: Props) {
     const { value, onChangeAction, onSearchAction, addr1Options, addr2Options, categoryOptions } =
         props;
@@ -64,10 +112,7 @@ export default function StoreFilterBarCarrot(props: Props) {
         };
 
         window.addEventListener("open-store-search", openFromTopNav);
-
-        return () => {
-            window.removeEventListener("open-store-search", openFromTopNav);
-        };
+        return () => window.removeEventListener("open-store-search", openFromTopNav);
     }, [value.q]);
 
     const addr2Disabled = value.addr1 === "전체";
@@ -119,41 +164,27 @@ export default function StoreFilterBarCarrot(props: Props) {
     return (
         <>
             <div className="sticky top-0 z-30 -mx-4 border-b bg-white/95 px-4 py-3 backdrop-blur">
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
+                <div className="grid grid-cols-3 gap-2">
+                    <FilterButton
+                        title="광역시/도"
+                        valueText={value.addr1 === "전체" ? "전체" : value.addr1}
                         disabled={props.loading}
                         onClick={() => setOpenSheet("addr1")}
-                        className="flex-1 min-w-0 inline-flex h-11 items-center justify-between rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm"
-                    >
-                        <span className="truncate">광역시/도 {value.addr1 === "전체" ? "전체" : value.addr1}</span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
-                    </button>
+                    />
 
-                    <button
-                        type="button"
+                    <FilterButton
+                        title="시/군/구"
+                        valueText={value.addr2 || "전체"}
                         disabled={props.loading || addr2Disabled}
                         onClick={() => setOpenSheet("addr2")}
-                        className={cx(
-                            "flex-1 min-w-0 inline-flex h-11 items-center justify-between rounded-full border px-4 text-sm font-semibold shadow-sm",
-                            addr2Disabled
-                                ? "border-gray-200 bg-gray-100 text-gray-400"
-                                : "border-gray-300 bg-white text-gray-900"
-                        )}
-                    >
-                        <span className="truncate">시/군/구 {value.addr2 || "전체"}</span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
-                    </button>
+                    />
 
-                    <button
-                        type="button"
+                    <FilterButton
+                        title="업종"
+                        valueText={value.category || "전체"}
                         disabled={props.loading}
                         onClick={() => setOpenSheet("category")}
-                        className="flex-1 min-w-0 inline-flex h-11 items-center justify-between rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm"
-                    >
-                        <span className="truncate">업종 {value.category || "전체"}</span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
-                    </button>
+                    />
                 </div>
             </div>
 
@@ -188,7 +219,8 @@ export default function StoreFilterBarCarrot(props: Props) {
 
                             <div className="mt-4 grid max-h-[55vh] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
                                 {currentOptions.map((item) => {
-                                    const normalized = item === "전체" && openSheet !== "addr1" ? "" : item;
+                                    const normalized =
+                                        item === "전체" && openSheet !== "addr1" ? "" : item;
 
                                     const active =
                                         openSheet === "addr1"
@@ -203,10 +235,10 @@ export default function StoreFilterBarCarrot(props: Props) {
                                             type="button"
                                             onClick={() => handleSelect(openSheet, item)}
                                             className={cx(
-                                                "rounded-2xl px-4 py-3 text-sm font-semibold transition",
+                                                "rounded-2xl px-4 py-3 text-sm font-semibold transition touch-manipulation",
                                                 active
                                                     ? "bg-gray-900 text-white"
-                                                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                                                    : "bg-gray-100 text-gray-800 hover:bg-gray-200 active:scale-[0.99]"
                                             )}
                                         >
                                             {item}
