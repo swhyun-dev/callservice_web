@@ -1,7 +1,7 @@
 // src/components/stores/StoreFilterBarCarrot.tsx
 "use client";
 
-import { ChevronDown, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export type FilterState = {
@@ -28,28 +28,25 @@ function cx(...arr: Array<string | false | undefined | null>) {
 }
 
 function FilterButton(props: {
-    valueText: string;
+    text: string;
     disabled?: boolean;
-    onClick: () => void;
+    onPress: () => void;
 }) {
     return (
         <button
             type="button"
             disabled={props.disabled}
-            onClick={props.onClick}
+            onClick={props.onPress}
             className={cx(
-                "relative z-10 w-full min-w-0 h-11 rounded-full border px-3 shadow-sm transition",
-                "flex items-center justify-between bg-white text-left touch-manipulation select-none",
-                props.disabled
-                    ? "border-gray-200 bg-gray-100 text-gray-400"
-                    : "border-gray-300 text-gray-900 active:scale-[0.99]"
+                "w-full h-11 rounded-full border border-gray-300 bg-white px-3 shadow-sm",
+                "flex items-center justify-center",
+                "text-sm font-semibold text-gray-900",
+                "select-none cursor-pointer pointer-events-auto touch-manipulation",
+                props.disabled ? "bg-gray-100 text-gray-400 border-gray-200" : ""
             )}
             style={{ WebkitTapHighlightColor: "transparent" }}
         >
-            <span className="min-w-0 flex-1 whitespace-nowrap text-[13px] font-semibold pointer-events-none">
-                {props.valueText}
-            </span>
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-gray-400 pointer-events-none" />
+            <span className="min-w-0 whitespace-nowrap pointer-events-none">{props.text}</span>
         </button>
     );
 }
@@ -94,8 +91,6 @@ export default function StoreFilterBarCarrot(props: Props) {
         return () => window.removeEventListener("open-store-search", openFromTopNav);
     }, [value.q]);
 
-    const addr2Disabled = value.addr1 === "전체";
-
     const currentOptions = useMemo(() => {
         if (openSheet === "addr1") return addr1Options;
         if (openSheet === "addr2") return ["전체", ...addr2Options];
@@ -104,66 +99,66 @@ export default function StoreFilterBarCarrot(props: Props) {
     }, [openSheet, addr1Options, addr2Options, categoryOptions]);
 
     function handleSelect(type: Exclude<SheetType, null>, selected: string) {
+        let next: FilterState = value;
+
         if (type === "addr1") {
-            onChangeAction({
+            next = {
                 ...value,
                 addr1: selected,
                 addr2: "",
                 category: "",
-            });
+            };
         }
 
         if (type === "addr2") {
-            onChangeAction({
+            next = {
                 ...value,
                 addr2: selected === "전체" ? "" : selected,
-            });
+            };
         }
 
         if (type === "category") {
-            onChangeAction({
+            next = {
                 ...value,
                 category: selected === "전체" ? "" : selected,
-            });
+            };
         }
 
         setOpenSheet(null);
-        onSearchAction();
+        onChangeAction(next);
     }
 
     function submitKeywordSearch() {
-        onChangeAction({
+        const next = {
             ...value,
             q: searchText.trim(),
-        });
+        };
         setSearchOpen(false);
-        onSearchAction();
+        onChangeAction(next);
     }
 
     const addr1Text = value.addr1 === "전체" ? "광역시/도" : value.addr1;
-    const addr2Text = addr2Disabled ? "시/군/구" : value.addr2 || "시/군/구";
+    const addr2Text = value.addr1 === "전체" ? "시/군/구" : value.addr2 || "시/군/구";
     const categoryText = value.category || "업종";
 
     return (
         <>
-            <div className="sticky top-0 z-30 isolate -mx-4 border-b bg-white/95 px-4 py-2 backdrop-blur">
+            <div className="relative z-10 -mx-4 border-b bg-white px-4 py-2">
                 <div className="grid grid-cols-3 gap-2">
                     <FilterButton
-                        valueText={addr1Text}
+                        text={addr1Text}
                         disabled={props.loading}
-                        onClick={() => setOpenSheet("addr1")}
+                        onPress={() => setOpenSheet("addr1")}
                     />
-
                     <FilterButton
-                        valueText={addr2Text}
-                        disabled={props.loading || addr2Disabled}
-                        onClick={() => setOpenSheet("addr2")}
+                        text={addr2Text}
+                        disabled={props.loading || value.addr1 === "전체"}
+                        onPress={() => setOpenSheet("addr2")}
                     />
-
                     <FilterButton
-                        valueText={categoryText}
+                        text={categoryText}
                         disabled={props.loading}
-                        onClick={() => setOpenSheet("category")}
+                        onPress={() => setOpenSheet("category")}
                     />
                 </div>
             </div>
@@ -215,10 +210,10 @@ export default function StoreFilterBarCarrot(props: Props) {
                                             type="button"
                                             onClick={() => handleSelect(openSheet, item)}
                                             className={cx(
-                                                "rounded-2xl px-4 py-3 text-sm font-semibold transition touch-manipulation",
+                                                "rounded-2xl px-4 py-3 text-sm font-semibold transition",
                                                 active
                                                     ? "bg-gray-900 text-white"
-                                                    : "bg-gray-100 text-gray-800 hover:bg-gray-200 active:scale-[0.99]"
+                                                    : "bg-gray-100 text-gray-800"
                                             )}
                                             style={{ WebkitTapHighlightColor: "transparent" }}
                                         >

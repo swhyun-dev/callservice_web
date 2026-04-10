@@ -6,6 +6,10 @@ import Image from "next/image";
 import { Search } from "lucide-react";
 
 export default function TopNav() {
+    function handleLogoClick() {
+        window.dispatchEvent(new Event("reset-store-filters"));
+    }
+
     return (
         <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
             <div className="relative mx-auto flex h-16 max-w-6xl items-center px-4">
@@ -21,7 +25,7 @@ export default function TopNav() {
                 </div>
 
                 <div className="mx-auto">
-                    <Link href="/" className="block">
+                    <Link href="/" className="block" onClick={handleLogoClick}>
                         <div className="relative h-10 w-[220px] overflow-hidden">
                             <Image
                                 src="/logo.png"

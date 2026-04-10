@@ -28,6 +28,13 @@ type ApiResp = {
     items: StoreItem[];
 };
 
+const DEFAULT_FILTER: FilterState = {
+    addr1: "전체",
+    addr2: "",
+    category: "",
+    q: "",
+};
+
 const ADDR1 = [
     "전체",
     "서울",
@@ -63,20 +70,7 @@ function buildQuery(state: FilterState, page: number) {
 }
 
 export default function HomePage() {
-    const [filter, setFilter] = useState<FilterState>({
-        addr1: "전체",
-        addr2: "",
-        category: "",
-        q: "",
-    });
-
-    const [draftFilter, setDraftFilter] = useState<FilterState>({
-        addr1: "전체",
-        addr2: "",
-        category: "",
-        q: "",
-    });
-
+    const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ApiResp | null>(null);
@@ -89,9 +83,7 @@ export default function HomePage() {
             category: sp.get("category") || "",
             q: sp.get("q") || "",
         };
-
         setFilter(initial);
-        setDraftFilter(initial);
     }, []);
 
     useEffect(() => {
@@ -128,42 +120,55 @@ export default function HomePage() {
         };
     }, [filter, page]);
 
+    useEffect(() => {
+        const resetFilters = () => {
+            setPage(1);
+            setFilter(DEFAULT_FILTER);
+        };
+
+        window.addEventListener("reset-store-filters", resetFilters);
+        return () => window.removeEventListener("reset-store-filters", resetFilters);
+    }, []);
+
     const addr2Options = useMemo(() => {
         if (!data?.items?.length) return [];
-        if (draftFilter.addr1 === "전체") return [];
+        if (filter.addr1 === "전체") return [];
 
         const set = new Set<string>();
         for (const it of data.items) {
-            if (it.addr1 === draftFilter.addr1 && it.addr2) set.add(it.addr2);
+            if (it.addr1 === filter.addr1 && it.addr2) set.add(it.addr2);
         }
 
         return Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
-    }, [data, draftFilter.addr1]);
+    }, [data, filter.addr1]);
 
     const categoryOptions = useMemo(() => {
         if (!data?.items?.length) return [];
 
         const set = new Set<string>();
         for (const it of data.items) {
-            if (draftFilter.addr1 !== "전체" && it.addr1 !== draftFilter.addr1) continue;
-            if (draftFilter.addr2 && it.addr2 !== draftFilter.addr2) continue;
+            if (filter.addr1 !== "전체" && it.addr1 !== filter.addr1) continue;
+            if (filter.addr2 && it.addr2 !== filter.addr2) continue;
             if (it.category) set.add(it.category);
         }
 
         return Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
-    }, [data, draftFilter.addr1, draftFilter.addr2]);
+    }, [data, filter.addr1, filter.addr2]);
 
-    function handleSearch() {
+    function applyFilter(next: FilterState) {
         setPage(1);
-        setFilter(draftFilter);
+        setFilter(next);
     }
 
     return (
         <div className="space-y-4">
             <StoreFilterBarCarrot
-                value={draftFilter}
-                onChangeAction={setDraftFilter}
-                onSearchAction={handleSearch}
+                value={filter}
+                onChangeAction={applyFilter}
+                onSearchAction={() => {
+                    setPage(1);
+                    setFilter((prev) => ({ ...prev }));
+                }}
                 addr1Options={ADDR1}
                 addr2Options={addr2Options}
                 categoryOptions={categoryOptions}
