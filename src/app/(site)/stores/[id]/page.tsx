@@ -1,7 +1,6 @@
 // src/app/(site)/stores/[id]/page.tsx
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
-import Link from "next/link";
 
 function buildNaverMapUrl({
                               name,
@@ -40,9 +39,6 @@ export default async function StoreDetailPage({
         return (
             <div className="rounded-3xl border bg-white p-8">
                 <div className="text-sm text-gray-700">잘못된 접근입니다.</div>
-                <Link href="/" className="mt-4 inline-block text-sm underline">
-                    매장안내로 돌아가기
-                </Link>
             </div>
         );
     }
@@ -61,9 +57,6 @@ export default async function StoreDetailPage({
                 <div className="mt-2 text-sm text-gray-600">
                     삭제되었거나 비활성화된 매장일 수 있어요.
                 </div>
-                <Link href="/" className="mt-4 inline-block text-sm underline">
-                    매장안내로 돌아가기
-                </Link>
             </div>
         );
     }
@@ -78,15 +71,6 @@ export default async function StoreDetailPage({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <Link href="/" className="text-sm text-gray-600 hover:underline">
-                    ← 매장 목록
-                </Link>
-                <span className="rounded-full bg-gray-900 px-3 py-1 text-xs text-white">
-                    {store.category}
-                </span>
-            </div>
-
             <section className="overflow-hidden rounded-3xl border bg-white shadow-sm">
                 <div className="aspect-[16/10] w-full bg-gray-100">
                     {store.images[0] ? (
@@ -103,9 +87,13 @@ export default async function StoreDetailPage({
                 </div>
 
                 <div className="space-y-5 p-6">
-                    <h1 className="text-xl font-bold text-gray-900">{store.name}</h1>
+                    <div className="flex items-start justify-between gap-3">
+                        <h1 className="text-xl font-bold text-gray-900">{store.name}</h1>
+                        <span className="rounded-full bg-gray-900 px-3 py-1 text-xs text-white">
+                            {store.category}
+                        </span>
+                    </div>
 
-                    {/* ✅ 순서 변경 + 문구 변경 */}
                     <div className="space-y-3 rounded-2xl bg-gray-50 p-4 text-sm">
                         <div>
                             <div className="text-xs text-gray-500">전화</div>
